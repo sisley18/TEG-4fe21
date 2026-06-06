@@ -141,14 +141,33 @@ function getLevelData() {
 }
 
 // Load question layout
-function loadActiveExercise() {
-    const levelData = getLevelData();
-    if (!levelData || !levelData.exercises[currentTab]) {
-        console.error("Data not found for", currentLevel, currentTab);
-        return;
+    let exercise;
+    let key;
+    const dropdown = document.getElementById('lexical-dropdown-container');
+    
+    if (currentTab === 'lexical_fields') {
+        if (dropdown) dropdown.style.display = 'block';
+        const field = document.getElementById('lexical-field-select') ? document.getElementById('lexical-field-select').value : 'programming';
+        
+        if (!tegLexicalData || !tegLexicalData[currentLevel] || !tegLexicalData[currentLevel][field]) {
+            console.error("Lexical data not found for", currentLevel, field);
+            return;
+        }
+        exercise = tegLexicalData[currentLevel][field];
+        key = `${currentLevel}_lexical_fields_${field}`;
+    } else {
+        if (dropdown) dropdown.style.display = 'none';
+        
+        const levelData = getLevelData();
+        if (!levelData || !levelData.exercises[currentTab]) {
+            console.error("Data not found for", currentLevel, currentTab);
+            return;
+        }
+        exercise = levelData.exercises[currentTab];
+        key = `${currentLevel}_${currentTab}`;
     }
     
-    const exercise = levelData.exercises[currentTab];
+    
     
     // Header details
     document.getElementById('exercise-title').innerHTML = `${exercise.title} <button class="speaker-btn" onclick="speakPhrase('${exercise.title.replace(/'/g, "\\'")}')">🔊</button>`;
@@ -159,7 +178,6 @@ function loadActiveExercise() {
     container.innerHTML = '';
     
     // Initialize shuffled indices if not already present
-    const key = `${currentLevel}_${currentTab}`;
     const itemsCount = exercise.items ? exercise.items.length : (exercise.pairs ? exercise.pairs.length : 0);
     
     if (!shuffledIndices[key] || shuffledIndices[key].length !== itemsCount) {
@@ -186,7 +204,11 @@ function resetIndices(key, count) {
 }
 
 function shuffleCurrent() {
-    const key = `${currentLevel}_${currentTab}`;
+    let key = `${currentLevel}_${currentTab}`;
+    if (currentTab === 'lexical_fields') {
+        const field = document.getElementById('lexical-field-select') ? document.getElementById('lexical-field-select').value : 'programming';
+        key = `${currentLevel}_lexical_fields_${field}`;
+    }
     const indices = shuffledIndices[key];
     if (indices && indices.length > 1) {
         for (let i = indices.length - 1; i > 0; i--) {
@@ -469,7 +491,11 @@ function disableCards() {
     
     // Save to profile
     const matchId = firstCard.dataset.matchId;
-    const key = `${currentLevel}_${currentTab}`;
+    let key = `${currentLevel}_${currentTab}`;
+    if (currentTab === 'lexical_fields') {
+        const field = document.getElementById('lexical-field-select').value;
+        key = `${currentLevel}_lexical_fields_${field}`;
+    }
     if (!students[activeStudent].scores[key]) {
         students[activeStudent].scores[key] = {};
     }
@@ -502,7 +528,11 @@ function resetBoard() {
 
 // Save inputs to profile
 function saveResponse(index, value) {
-    const key = `${currentLevel}_${currentTab}`;
+    let key = `${currentLevel}_${currentTab}`;
+    if (currentTab === 'lexical_fields') {
+        const field = document.getElementById('lexical-field-select').value;
+        key = `${currentLevel}_lexical_fields_${field}`;
+    }
     if (!students[activeStudent].scores[key]) {
         students[activeStudent].scores[key] = {};
     }
@@ -512,9 +542,17 @@ function saveResponse(index, value) {
 
 // Check Responses
 function checkAll() {
-    const levelData = getLevelData();
-    const exercise = levelData.exercises[currentTab];
-    const key = `${currentLevel}_${currentTab}`;
+    let exercise;
+    let key;
+    if (currentTab === 'lexical_fields') {
+        const field = document.getElementById('lexical-field-select').value;
+        exercise = tegLexicalData[currentLevel][field];
+        key = `${currentLevel}_lexical_fields_${field}`;
+    } else {
+        const levelData = getLevelData();
+        exercise = levelData.exercises[currentTab];
+        key = `${currentLevel}_${currentTab}`;
+    }
     const studentSaved = students[activeStudent].scores[key] || {};
     
     let correctCount = 0;
@@ -611,7 +649,11 @@ function showResultsModal(correct, total, percentage) {
     modal.classList.add('active');
     
     // Auto-save highest score for the active level section
-    const key = `${currentLevel}_${currentTab}_percentage`;
+    let key = `${currentLevel}_${currentTab}_percentage`;
+    if (currentTab === 'lexical_fields') {
+        const field = document.getElementById('lexical-field-select').value;
+        key = `${currentLevel}_lexical_fields_${field}_percentage`;
+    }
     const prevMax = students[activeStudent].scores[key] || 0;
     if (percentage > prevMax) {
         students[activeStudent].scores[key] = percentage;
@@ -627,10 +669,10 @@ function closeModal() {
     document.getElementById('results-modal').classList.remove('active');
 }
 
-// Calculate level progress (average of highest percentages of all 6 exercises)
+// Calculate level progress (average of highest percentages of all exercises except lexical fields)
 function updateLevelProgress(level) {
     let totalScore = 0;
-    const tabs = ['word_formation', 'open_cloze', 'sentence_transformation', 'error_correction', 'vocab_matching', 'idiom_challenge'];
+    const tabs = ['word_formation', 'open_cloze', 'sentence_transformation', 'error_correction', 'vocab_matching', 'idiom_challenge', 'phrasal_verbs'];
     
     tabs.forEach(tab => {
         const key = `${level}_${tab}_percentage`;
@@ -651,7 +693,7 @@ function renderBadgeDisplay() {
     const badgeContainer = document.getElementById('badge-display-container');
     if (!badgeContainer) return;
     
-    const tabs = ['word_formation', 'open_cloze', 'sentence_transformation', 'error_correction', 'vocab_matching', 'idiom_challenge'];
+    const tabs = ['word_formation', 'open_cloze', 'sentence_transformation', 'error_correction', 'vocab_matching', 'idiom_challenge', 'phrasal_verbs'];
     let bronze = 0, silver = 0, gold = 0;
     
     tabs.forEach(tab => {
@@ -684,8 +726,14 @@ function renderBadgeDisplay() {
 // Reset responses
 function resetLevel() {
     if (confirm("Are you sure you want to reset all answers in this category?")) {
-        const key = `${currentLevel}_${currentTab}`;
-        const pctKey = `${currentLevel}_${currentTab}_percentage`;
+        let key = `${currentLevel}_${currentTab}`;
+        let pctKey = `${currentLevel}_${currentTab}_percentage`;
+        
+        if (currentTab === 'lexical_fields') {
+            const field = document.getElementById('lexical-field-select').value;
+            key = `${currentLevel}_lexical_fields_${field}`;
+            pctKey = `${currentLevel}_lexical_fields_${field}_percentage`;
+        }
         
         students[activeStudent].scores[key] = {};
         students[activeStudent].scores[pctKey] = 0;

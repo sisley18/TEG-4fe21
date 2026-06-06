@@ -103,6 +103,7 @@
             <button class="tab-btn" id="tab-btn-vocab_matching" onclick="setTab('vocab_matching')">🧩 Matching Game</button>
             <button class="tab-btn" id="tab-btn-idiom_challenge" onclick="setTab('idiom_challenge')">💡 Collocations</button>
             <button class="tab-btn" id="tab-btn-phrasal_verbs" onclick="setTab('phrasal_verbs')">🗣️ Phrasal Verbs</button>
+            <button class="tab-btn" id="tab-btn-lexical_fields" onclick="setTab('lexical_fields')">🏢 Lexical Fields</button>
         </div>
 
         <!-- Main Display Card -->
@@ -111,6 +112,16 @@
                 <div>
                     <h2 class="exercise-title" id="exercise-title">Word Formation</h2>
                     <p class="exercise-description" id="exercise-description">Change the word in brackets to complete the sentence.</p>
+                    <div id="lexical-dropdown-container" style="display: none; margin-top: 15px;">
+                        <label style="font-weight: 600; margin-right: 10px; color: var(--text-color);">Select Field:</label>
+                        <select id="lexical-field-select" class="teg-input" style="max-width: 250px; display: inline-block; padding: 8px;" onchange="loadActiveExercise()">
+                            <option value="programming">Programming</option>
+                            <option value="health">Health</option>
+                            <option value="it">IT</option>
+                            <option value="human_resources">Human Resources</option>
+                            <option value="services">Services</option>
+                        </select>
+                    </div>
                 </div>
                 <!-- Timer widget -->
                 <div class="timer-widget" id="timer-widget" style="display: none;">
@@ -161,6 +172,7 @@
     <script src="js/data_teg_a1a2.js"></script>
     <script src="js/data_teg_b1b2.js"></script>
     <script src="js/data_teg_c1c2.js"></script>
+    <script src="js/data_lexical_fields.js"></script>
     <!-- Load Logic -->
     <script src="js/teg.js"></script>
 </body>
